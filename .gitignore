@@ -1,0 +1,5 @@
+build
+sdkconfig
+sdkconfig.old
+arduino_secrets.h
+.vscode/c_cpp_properties.json
