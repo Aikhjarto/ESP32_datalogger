@@ -32,6 +32,7 @@
 #include <esp32-hal-gpio.h>
 #include <pgmspace.h>
 #include "epd1in54_V2.h"
+#include <HardwareSerial.h>
 
 // // EPD1IN54 commands
 #define DRIVER_OUTPUT_CONTROL                       0x01
@@ -154,22 +155,17 @@ void Epd::SendData(unsigned char data)
 	SpiTransfer(data);
 }
 
-void Epd::SendData(unsigned char * data, int32_t size)
-{
-	DigitalWrite(dc_pin, HIGH);
-	SpiTransfer(data, size);
-}
-
-
 /**
  *  @brief: Wait until the busy_pin goes HIGH
  */
 void Epd::WaitUntilIdle(void)
 {
+	// Serial.print("WaitUntilIdle:");
 	while(DigitalRead(busy_pin) == 1) {      //LOW: idle, HIGH: busy
-		// DelayMs(10);
+		// Serial.print(".");
 		vTaskDelay(10*portTICK_PERIOD_MS);
 	}
+	// Serial.print("\n");
 }
 
 void Epd::Lut(unsigned char* lut)
@@ -392,27 +388,6 @@ void Epd::DisplayPartBaseImage(const unsigned char* frame_buffer)
 	DisplayFrame();
 }
 
-void Epd::DisplayPartBaseImageNoRefresh(const unsigned char* frame_buffer)
-{
-	int w = (EPD_WIDTH % 8 == 0)? (EPD_WIDTH / 8 ): (EPD_WIDTH / 8 + 1);
-	int h = EPD_HEIGHT;
-
-	if (frame_buffer != NULL) {
-		SendCommand(WRITE_RAM);
-		for (int j = 0; j < h; j++) {
-			for (int i = 0; i < w; i++) {
-				SendData(pgm_read_byte(&frame_buffer[i + j * w]));
-			}
-		}
-
-		SendCommand(WRITE_RAM_RED);
-		for (int j = 0; j < h; j++) {
-			for (int i = 0; i < w; i++) {
-				SendData(pgm_read_byte(&frame_buffer[i + j * w]));
-			}
-		}
-	}
-}
 
 void Epd::DisplayPartBaseWhiteImage(void)
 {
@@ -627,22 +602,6 @@ void Epd::SetFrameMemoryPartial(
 		for (int i = 0; i < (x_end - x + 1) / 8; i++) {
 			SendData(image_buffer[i + j * (image_width / 8)]);
 		}
-	}
-}
-
-
-void Epd::SetFrameMemory(
-        const unsigned char* image_buffer,
-        int x,
-        int y,
-        int image_width,
-        int image_height,
-		char use_partial_update
-){
-	if (use_partial_update) {
-		SetFrameMemoryPartial(image_buffer, x, y, image_width, image_height);
-	} else {
-		SetFrameMemory(image_buffer, x, y, image_width, image_height);
 	}
 }
 

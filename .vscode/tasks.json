@@ -1,0 +1,54 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "ESP OTA Server",
+            "type": "shell",
+            "isBackground": true,
+            "command": "python3 ESPImageSrv/ESPImageSrv.py --images-dir ESPImageSrv/images -c ESPImageSrv/server.crt -k ESPImageSrv/server.key --logfile update.log",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build ESP OTA Images",
+            "type": "shell",
+            "group": {
+                "kind": "build",
+            },
+            "command": "scripts/build_ota_images",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+        },
+        {
+            "label": "Change build target",
+            "type": "shell",
+            "command": "scripts/set_build_target ${input:build_target}",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+        }
+    ],
+    "inputs": [
+        {
+            "id": "build_target",
+            "description": "Hostname of ESP to build for",
+            "type": "pickString",
+            "options": [
+                "",
+                "esp32_07EDE0",
+                "esp32_44BCD8",
+                "esp32_C7C50C",
+                "esp32_1A679C",
+            ],
+            "default": ""
+        }
+    ]
+}

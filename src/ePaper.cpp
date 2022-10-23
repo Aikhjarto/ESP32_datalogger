@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <time.h>
-#include "src/epd1in54_v2/fonts.h" // fonts for ePaper display
-#include <stdlib_noniso.h>         // for dtostrf
+#include "epd1in54_v2/fonts.h" // fonts for ePaper display
+#include <stdlib_noniso.h>     // for dtostrf
 #include "ePaper.h"
 #include "myLib.h"
 #include <HardwareSerial.h>
@@ -12,7 +12,6 @@
 /*****************************************************************************/
 /* RTC variables for partial updates */
 /*****************************************************************************/
-
 RTC_DATA_ATTR unsigned char background_image_buffer[EPD_WIDTH * EPD_HEIGHT / 8]; // 8 pixel per byte
 RTC_DATA_ATTR char old_date_str[12];
 RTC_DATA_ATTR char old_hour_str[9];
@@ -33,13 +32,14 @@ void ePaperTaskFunction(void *pvParameters)
   uint32_t ulNotifiedValue = 0;
   queue_content content;
 
-  Serial.printf("ePaper Task startet on Core %d\n", xPortGetCoreID());
+  ESP_LOGI(LOGTAG_EPAPER, "ePaper Task started on Core %d", xPortGetCoreID());
 
   epaper.init();
 
   for (;;)
   {
     xQueueReceive(ePaper_update_queue, &(content), portMAX_DELAY);
+    ESP_LOGV(LOGTAG_EPAPER, "queue received content type %d", (int)content.type);
     switch (content.type)
     {
     case queue_content_type::temperature1:
@@ -68,7 +68,7 @@ void ePaperTaskFunction(void *pvParameters)
       break;
 
     default:
-      Serial.printf("Got unknown notification value: %d\n", ulNotifiedValue);
+      ESP_LOGE(LOGTAG_EPAPER, "Got unknown notification value: %d", ulNotifiedValue);
       break;
     }
   }
@@ -79,7 +79,7 @@ void ePaperTaskFunction(void *pvParameters)
 /* ePaper */
 /*****************************************************************************/
 
-void ePaper::init_background_image(const char* label_line1, const char* label_line2)
+void ePaper::init_background_image(const char *label_line1, const char *label_line2)
 {
 
   background_painter->Clear(UNCOLORED);
@@ -130,19 +130,22 @@ ePaper::~ePaper()
 
 void ePaper::init(void)
 {
-  Serial.print("e-Paper init");
+  ESP_LOGI(LOGTAG_EPAPER, "e-Paper init");
 
   // supply ePaper with power
   if (hasPowerPin())
   {
+    ESP_LOGV(LOGTAG_EPAPER, "supply display with power");
     pinMode(getPowerPin(), OUTPUT);
     digitalWrite(getPowerPin(), HIGH);
   }
 
   // wake up
+  ESP_LOGV(LOGTAG_EPAPER, "wake display up");
   LDirInit();
+  ESP_LOGV(LOGTAG_EPAPER, "update background image");
   DisplayPartBaseImage(background_image_buffer);
-  Serial.println("EPD init done");
+  ESP_LOGI(LOGTAG_EPAPER, "EPD init done");
 }
 
 void ePaper::updateTemperature(float temperature, size_t position_index)
@@ -155,7 +158,7 @@ void ePaper::updateTemperature(float temperature, size_t position_index)
   dtostrf(temperature, 4, 1, buff_10);
   if (strncmp(buff_10, old_temperature_strings + 6 * position_index, 4))
   {
-    Serial.printf("EPD Update Temperature %d\n", position_index);
+    ESP_LOGI(LOGTAG_EPAPER, "EPD Update Temperature %d", position_index);
     strcpy(old_temperature_strings + 6 * position_index, buff_10);
 
     switch (position_index)
@@ -202,7 +205,7 @@ void ePaper::updateVBat(float v_bat)
   tmpStr[3] = '\0';
   if (strncmp(tmpStr, old_v_bat_str, 3))
   {
-    Serial.println("EPD update vBat");
+    ESP_LOGI(LOGTAG_EPAPER, "EPD update vBat");
     strcpy(old_v_bat_str, tmpStr);
     painter->SetWidth(3 * Font16.Width);
     painter->SetHeight(16);
@@ -217,7 +220,7 @@ void ePaper::updateVBat(float v_bat)
 
 void ePaper::updateDate(struct tm *timeinfo)
 {
-  Serial.println("EPD update date");
+  ESP_LOGI(LOGTAG_EPAPER, "EPD update date");
 
   painter->SetHeight(24);
   painter->SetWidth(2 * Font24.Width);
@@ -263,7 +266,7 @@ void ePaper::updateRSSI(int8_t RSSI)
   if (strncmp(RSSI_str, old_RSSI_str, 4))
   {
     strcpy(old_RSSI_str, RSSI_str);
-    Serial.println("Update RSSI");
+    ESP_LOGI(LOGTAG_EPAPER, "Update RSSI");
     painter->SetHeight(Font16.Height);
     painter->SetWidth(3 * Font16.Width);
     painter->Clear(COLORED);
@@ -279,11 +282,11 @@ void ePaper::finish()
 {
 
   // update view
-  Serial.println("EPD memory set");
+  ESP_LOGI(LOGTAG_EPAPER, "EPD memory set");
   DisplayPartFrame();
 
   // shut down ePaper
-  Serial.println("e-Paper done; sending to sleep");
+  ESP_LOGI(LOGTAG_EPAPER, "e-Paper done; sending to sleep");
   Sleep();
 
   if (epaper.hasPowerPin())

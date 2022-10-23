@@ -26,3 +26,19 @@
 	path = components/arduino-libraries/Arduino-LiquidCrystal-I2C-library
 	url = https://github.com/fdebrabander/Arduino-LiquidCrystal-I2C-library.git
 	shallow = true
+[submodule "components/arduino-libraries/Adafruit_TCS34725"]
+	path = components/arduino-libraries/Adafruit_TCS34725
+	url = https://github.com/adafruit/Adafruit_TCS34725.git
+	shallow = true
+[submodule "components/arduino-libraries/AS3935MI"]
+	path = components/arduino-libraries/AS3935MI
+	url = https://bitbucket.org/christandlg/as3935mi.git
+[submodule "components/arduino-libraries/Adafruit_BME280"]
+	path = components/arduino-libraries/Adafruit_BME280
+	url = https://github.com/adafruit/Adafruit_BME280_Library
+[submodule "components/arduino-libraries/Adafruit_Sensor"]
+	path = components/arduino-libraries/Adafruit_Sensor
+	url = https://github.com/adafruit/Adafruit_Sensor
+[submodule "components/arduino-libraries/Adafruit_PCF8574"]
+	path = components/arduino-libraries/Adafruit_PCF8574
+	url = https://github.com/adafruit/Adafruit_PCF8574

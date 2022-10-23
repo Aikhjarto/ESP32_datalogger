@@ -4,8 +4,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp32-hal.h>
-#include "src/epd1in54_v2/epd1in54_V2.h" // control functions for ePaper
-#include "src/epd1in54_v2/epdpaint.h"    // paint functions for ePaper
+#include "epd1in54_v2/epd1in54_V2.h" // control functions for ePaper
+#include "epd1in54_v2/epdpaint.h"    // paint functions for ePaper
 #include <inttypes.h>
 
 enum class queue_content_type
@@ -26,7 +26,7 @@ struct queue_content
     void *ptr;
 };
 
-// inter-procress communication
+// inter-process communication
 extern TaskHandle_t ePaperTaskHandle;
 extern QueueHandle_t ePaper_update_queue;
 extern SemaphoreHandle_t semaphore_ePaper_done;
@@ -43,6 +43,8 @@ public:
     int getPowerPin() { return powerPin; };
     void setHasVBat(bool has_vbat) { hasVbat = has_vbat; };
     bool hasVBat() { return hasVbat; };
+    
+    void updateLabelLines(const char* line1, const char* line2) {label_line1 = line1; label_line2 = line2;};
 
     void init(void);
     void init_background_image(const char *, const char *);
@@ -65,10 +67,13 @@ private:
     unsigned char image[1024];
     int powerPin = GPIO_NUM_NC;
     bool hasVbat = false;
+    const char *label_line1;
+    const char *label_line2;
     Paint *background_painter;
     Paint *painter;
 };
 
 extern ePaper epaper;
+static const char *LOGTAG_EPAPER = "EPAPER";
 
 #endif

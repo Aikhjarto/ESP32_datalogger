@@ -53,14 +53,11 @@ public:
 	int HDirInit(void);
 	void SendCommand(unsigned char command);
 	void SendData(unsigned char data);
-	void SendData(unsigned char *data, int32_t size);
 	void WaitUntilIdle(void);
 	void Reset(void);
 	void Clear(void);
-	void ClearNoDisplay(void);
 	void Display(const unsigned char* frame_buffer);
 	void DisplayPartBaseImage(const unsigned char* frame_buffer);
-	void DisplayPartBaseImageNoRefresh(const unsigned char* frame_buffer);
 	void DisplayPartBaseWhiteImage(void);
 	void DisplayPart(const unsigned char* frame_buffer);
 	void SetFrameMemory(
@@ -69,14 +66,6 @@ public:
 	        int y,
 	        int image_width,
 	        int image_height
-	);
-	void SetFrameMemory(
-	        const unsigned char* image_buffer,
-	        int x,
-	        int y,
-	        int image_width,
-	        int image_height,
-			char flag
 	);
 	void SetFrameMemoryPartial(
 	        const unsigned char* image_buffer,

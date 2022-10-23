@@ -1,5 +1,5 @@
-# Sketch
-In this project, I realized a temperature measurement for dual heating circuit of a building using an ESP32 to read out 4 DS18B20 temperature sensors, send temperature data via MQTT, and optionally display the result on an ePaper display. 
+# ESP32 Datalogger
+In this project, I realized a temperature measurement a heating circuit of a building using an ESP32 to read out DS18B20 temperature sensors and mains detectors, send data via MQTT, and optionally display the result on an ePaper, OLED or LCD display. 
 
 As the system should be able to run from a battery, special thought on power consumption was given.
 
@@ -15,10 +15,10 @@ As the system should be able to run from a battery, special thought on power con
 ### Wake-ups
 * Upon each wake-up temperature measurements using the connected Onewire temperature sensors are conducted and the results are stored along with the corresponding epochs in RTC memory and deep-sleep is entered again.
 * Upon each `WIFI_CONNECT_EVERY_Nth_LOOP`-th wake-up, a WiFi connection, NTP timesync and data transfer to an MQTT server is attempted.
-* Upon each `EPAPER_UPDATE_EVERY_Nth_LOOP`-th wake-up or upon wake-up via the `WAKEUP_PIN`, the values on the ePaper display are updated.
+* Upon each `DISPLAY_UPDATE_EVERY_Nth_LOOP`-th wake-up or upon wake-up via the `WAKEUP_PIN`, the values on the ePaper display are updated.
 
 ### Settings
-All settings, e.g. WiFi and MQTT settings, pin assignments, and sensor names, are grouped in [`setting.h`](settings.h).
+All settings, e.g. WiFi and MQTT settings, pin assignments, and sensor names, are grouped in [`setting.h.example`](settings.h.example).
 Some settings can be changed via MQTT messages. See [Subscribed MQTT messages](#Subscribed-MQTT-messages)
 
 
@@ -69,46 +69,58 @@ with `0<=j<OW_SERIALS_LENGTH` and `0<=k<DIs_LEN`
 
 ### ePaper
 * ePaper update is slower the more pixel require an update. Thus only update values that have changed since the last update.
-* The slowest part of the used ePaper display is the wake-up from sleep (~1.7 seconds) and the initialization phase required before any data transfer (~200 ms). Thus the number of calls to `EDP.setFrameMemory()` is kept to a minimum.
+* The slowest part of the used ePaper display is the wake-up from sleep ($\approx$ 1.7 seconds) and the initialization phase required before any data transfer ($\approx$ 200 ms). Thus the number of calls to `EDP.setFrameMemory()` is kept to a minimum.
 * The ePaper retains pixels but not its memory when sleeping/poweroff. Thus pixel values are stored bit-wise, i.e. 8 pixel per byte, in RTC memory of the ESP. For the 200x200px display 5000 bytes are required. Thus, not the whole image needs to be created when the ESP wakes from deep-sleep, but differential updates are used.
 
 ### History storage
-* To save memory, digital inputs are stored bitwise, like the image for the ePaper display.
+To save power, ePaper display updates and WiFi connection are not made in the same rate as data acquisition.
+In between WiFi connections, sensor data is stored in RTC memory during deep sleeps.
+If space in RTC memory runs out, data is offloaded to flash using SPIFFS.
 
 ### Timesync
-* `getLocalTime()` is presented seen in many examples and tutorials about the ESP32 to be used to wait for the ESP32's NTP client to be synced with an NTP server. However, this function actually waits until the year of the system clock is above 2016. Thus, it effectively waits only for the first NTP sync, since for a subsequent NTP update, the year was already above 2016 before starting the NTP update.
+`getLocalTime()` is presented seen in many examples and tutorials about the ESP32 to be used to wait for the ESP32's NTP client to be synced with an NTP server. However, this function actually waits until the year of the system clock is above 2016. Thus, it effectively waits only for the first NTP sync, since for a subsequent NTP update, the year was already above 2016 before starting the NTP update.
 
 ### Multitasking
-* Connecting to WiFi and initializing ePaper display both require a significant amount of waiting. Thus, two tasks are run in parallel.
-* TODO: describe semaphore and queue usage.
+Connecting to WiFi and initializing ePaper display both require a significant amount of waiting. Thus, two tasks are run as background thread while data from sensors is acquired.
 
 ### Power consumption
 Most cheap ESP32 boards have an LDO, e.g. ASM1117, voltage regulators, which have 6-10 mA idle power consumption, thus even when the ESP is deep-sleep, the LDO is a significant power sink.
 
+### ADC for battery level detection
+The ADC's in the ESP32 are quite nonlinear, especially outside 0.5-2.5V, and biased.
+To get rid of the bias, next to `VBAT_PIN` a `VREF_PIN` can be defined which sports the same voltage divider ratio but dividing from the 3.3V bin.
+Note that `VREF_PIN` and `VBAT_PIN` must be both connected to ADC1 since ADC2 is used internally for WiFi.
 
-LoLin D1 are seemingly the best voltage regulator, providing for 130µA board power consumption when ESP32 is in deep sleep.
-However, the board is not produced any more https://www.esp32.com/viewtopic.php?p=21863#p21863
+### Serial output
+While outputting status over UART is nice during development, serial output of even a few characters is taking several ms at baud-rate 115200.
+Thus reduce serial output to a minimum, but for debugging, I left it at first boot.
 
-LDO regulators are good if board is mostly idle.
+## OTA
+EPSImageSrv is a simple Python HTTP server which serves binary images as `*.bin`, SPIFFS images as `*.spiffs` and `*.date` as ASCII ISO date string.
+The `*.date` file is virtual (ESPImageSrv reads it from the `*.bin` file) and does not need to be created
 
-Best would be some buck/boost converter with  mode switch like this https://www.farnell.com/datasheets/43210.pdf
-Mode can be switched by ULP mode of ESP32 before powering on.
-
-Firebeetle ESP32 has pretty low idle consumption by using the RT9080-33GJ5 according to https://diyi0t.com/reduce-the-esp32-power-consumption/
-However, newer versions of Firebeetle ESP32 boards also have the ASM1117 according to high-res product images on amazon.
-Sparkfun ESP32 Thing is not available in Europe.
-Adafruit HUZZAH32 has fewer pins.
+Each time a WiFi connection is scheduled on the ESP32 boards, the check the `*.date` URL to see if an update is required and if so, download the `*.bin` file.
 
 ## Used Hardware
 * [Waveshare 200x200px, 1.54" E-Ink display module, B/W, V2, SPI](https://www.waveshare.com/product/displays/e-paper/1.54inch-e-paper-module.htm)
-* ESP32 NodeMCU with an ESP32-WROOM https://www.az-delivery.de/products/esp32-developmentboard?_pos=2&_sid=c2e3160aa&_ss=r
-* [DrRobot Firebeetle](https://www.dfrobot.com/product-1590.html)
+    + low number of pixels so full framebuffer fits in EPS32's RTC memory
+    - documentation and example library has potential for improvement
+* ESP32 Dev Board. Tested with:
+    * [DrRobot Firebeetle](https://www.dfrobot.com/product-1590.html)
+        + low quiescent current (< 1 mA) of voltage regulator
+        + 3.7V LiPo port with charge over USB possibility
+        - SMD soldering skill required to fill in missing 0-resistors to enable VBat
+    * [Heltec ESP32 Kit](https://heltec.org/project/wifi-kit-32/)
+        + 3.7V LiPo port with charge over USB possibility
+        - high quiescent current
+        + OLED display integrated
+        - OLED power is hardwired to GPIO_NUM_16, which cannot be enabled in deep-sleep
+    * [AZ-Delivery ESP-32 Dev Kit C](https://www.az-delivery.de/products/esp-32-dev-kit-c-v4)
+        + high availability
+        + follows Espressif's reference design
+        - high quiescent current of voltage regulator
+* DollaTek PCF8574 I2C I/O-Expander 
 * one push-button
 
-## Used Software
-* ESP for Arduino v4.4
-* Modified version of Waveshare's [e-Paper](https://github.com/waveshare/e-Paper) library (since the library had many bugs and was cumbersome to use for EPD1in54_V2)
-* [Arduino-Temperature-Control-Library](https://github.com/milesburton/Arduino-Temperature-Control-Library.git)
-
-Caution: Names or files and variables concerning fonts in `./src/epd1in54_v2` is quite common among many EPD libraries. If you get errors during linking regarding multiple definitions of fonts, remove EPD libraries that were installed using the Arduino Library Manager.
-
+## Build
+For details about the layout of the project and compiling it, see <BUILD.md>

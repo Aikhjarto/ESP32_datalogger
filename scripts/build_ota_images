@@ -1,0 +1,39 @@
+#!/bin/sh
+
+set -e
+set -x
+set -v
+
+# get directory where this file is located
+# https://stackoverflow.com/questions/4774054/reliable-way-for-a-bash-script-to-get-the-full-path-to-itself
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+cd "${SCRIPTPATH}/.."
+
+. ~/esp/esp-idf/export.sh
+
+# esp32_07EDE0 ... Firebeetle testboard
+# esp32_C7C50C ... Heizungsmischer
+# esp32_44BCD8 ... Wärmepumpe
+# esp32_1A679C ... Lolin32 testboard
+
+for TARGET in esp32_07EDE0 esp32_C7C50C esp32_44BCD8 esp32_1A679C; do 
+	# select build target
+	${SCRIPTPATH}/set_build_target "${TARGET}"
+
+	# remove sdkconfig when sdkconfig.default is changed, otherwise settings from sdkconfig.default are not applied for build
+	# https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html#custom-sdkconfig-defaults
+	[ -e /sdkconfig ] && rm sdkconfig
+
+	# build with ESP IDF
+	BUILD_DIR="build_idf_${TARGET}"
+	idf.py -B "${BUILD_DIR}" reconfigure build
+
+	# copy result to OTA images folder
+	cp "${BUILD_DIR}/ESP32_datalogger.bin" "ESPImageSrv/images/${TARGET/_/-}.bin"
+	cp "${BUILD_DIR}/spiffs.bin" "ESPImageSrv/images/${TARGET/_/-}.spiffs"
+	
+
+done
+
+${SCRIPTPATH}/set_build_target
+

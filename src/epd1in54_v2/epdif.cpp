@@ -58,6 +58,7 @@ void EpdIf::DigitalWrite(int pin, int value) {
 }
 
 int EpdIf::DigitalRead(int pin) {
+    pinMode(pin, INPUT);
     return digitalRead(pin);
 }
 

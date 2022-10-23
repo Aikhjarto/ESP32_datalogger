@@ -1,5 +1,34 @@
+###################
+# Project
+###################
 build
+build_*/
 sdkconfig
 sdkconfig.old
 arduino_secrets.h
-.vscode/c_cpp_properties.json
+update.log
+partition_table
+data/server.crt
+src/settings_board_select.h
+
+###################
+# vscode
+###################
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+##################
+# git-secret
+##################
+.gitsecret/keys/random_seed
+!*.secret

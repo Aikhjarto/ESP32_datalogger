@@ -1,0 +1,13 @@
+# Autodetect of board's flash size is not possible, thus set manually
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_PARTITION_TABLE_FILENAME="partitiontables/partitions_16MB.csv"
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitiontables/partitions_16MB.csv"
+
+# enable 32k external RTC clock
+CONFIG_ESP32_RTC_CLK_SRC_EXT_CRYS=y
+CONFIG_ESP32_RTC_CLK_CAL_CYCLES=1024
+
+# autoswitch between internal and external XTAL
+CONFIG_ESP32_XTAL_FREQ_AUTO=y
+

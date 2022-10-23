@@ -1,6 +1,36 @@
+# with high CONFIG_LOG_MAXIMUM_LEVEL, default app partition size of 1MB is too small
+
+# Autodetect of board's flash size is not possible, thus set manually
+CONFIG_PARTITION_TABLE_CUSTOM=y
 CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_PARTITION_TABLE_FILENAME="partitiontables/partitions_4MB.csv"
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitiontables/partitions_4MB.csv"
+
+# mbedTLS config
+CONFIG_ESP_TLS_USING_MBEDTLS=y
+CONFIG_ESP_TLS_PSK_VERIFICATION=y
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=n
+CONFIG_MBEDTLS_POLY1305_C=y
+CONFIG_MBEDTLS_SSL_PROTO_TLS1_2=y
+
+# faster boot from deep sleep if app size was small
 CONFIG_COMPILER_OPTIMIZATION_SIZE=y
 
+# faster boot by using QIO mode for reading flash
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHFREQ_80M=y
+
+# reduce default bootloader log level from info to error
+CONFIG_BOOTLOADER_LOG_LEVEL_ERROR=y
+
+# set log level of app
+CONFIG_LOG_DEFAULT_LEVEL_WARN=y
+CONFIG_LOG_MAXIMUM_LEVEL_VERBOSE=y                                                                                                  
+
+# much faster wake-up rom deep sleep
+CONFIG_BOOTLOADER_SKIP_VALIDATE_IN_DEEP_SLEEP=y
+
+# let ESP-IDF behave like Arduino IDE
 CONFIG_AUTOSTART_ARDUINO=y
 CONFIG_FREERTOS_HZ=1000
 
@@ -8,10 +38,6 @@ CONFIG_FREERTOS_HZ=1000
 CONFIG_ESP32_DEFAULT_CPU_FREQ_80=y
 
 # enable 32k external RTC clock
-CONFIG_ESP32_RTC_CLOCK_SOURCE_EXTERNAL_CRYSTAL=y
 CONFIG_ESP32_RTC_CLK_SRC_EXT_CRYS=y
 CONFIG_ESP32_RTC_CLK_CAL_CYCLES=1024
-
-# autoswitch between internal and external XTAL
-CONFIG_ESP32_XTAL_FREQ_AUTO=y
 

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string> // stream settings
 
 /*
@@ -31,3 +33,19 @@ String to int conversion with error checking.
 https://stackoverflow.com/a/6154614
 */
 STR2INT_ERROR str2int(int *i, char const *s, int base = 0);
+
+time_t cvt_TIME(char const *);
+
+time_t cvt_TIME(char const *, char const *);
+
+std::string systeminfo_json();
+
+
+struct bme_readout_t
+{
+  float temperature;
+  float humidity;
+  float pressure;
+};
+
+void print_wakeup_reason(const char* LOGTAG);
