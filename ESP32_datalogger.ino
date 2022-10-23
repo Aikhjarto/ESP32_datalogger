@@ -823,13 +823,13 @@ void MQTT_communication()
   // setup client
   esp_mqtt_client_config_t mqtt_cfg = {
       .uri = MQTT_URI,
-      .out_buffer_size = out_buffer_size,
 #ifdef MQTT_USERNAME
       .username = MQTT_USERNAME,
 #endif
 #ifdef MQTT_PASSWORD
       .password = MQTT_PASSWORD,
 #endif
+      .out_buffer_size = out_buffer_size,
       .network_timeout_ms = 1000,
   };
   esp_mqtt_client_handle_t my_esp_mqtt_client;
